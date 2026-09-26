@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مترجم هوشمند فایل و زیرنویس (Groq - Llama 3.1)</title>
+    <title>مترجم هوشمند فایل و زیرنویس (Groq - Llama 3.3)</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -23,7 +23,7 @@
         }
         h1 {
             text-align: center;
-            color: #f55036; /* رنگ سازمانی Groq */
+            color: #f55036; 
             margin-bottom: 30px;
         }
         .form-group {
@@ -115,7 +115,7 @@
 <body>
 
 <div class="container">
-    <h1>مترجم فایل (Groq API - Llama 3.1)</h1>
+    <h1>مترجم فایل (Groq API - Llama 3.3)</h1>
     
     <div class="form-group">
         <label for="apiKey">کلید API پلتفرم گراق (Groq API Key):</label>
@@ -190,7 +190,6 @@
         try {
             const fileContent = await readFileAsync(file);
             
-            // تقسیم فایل به بخش‌های کوچکتر
             const chunks = splitIntoChunks(fileContent, originalFileExtension);
             statusText.innerText = `فایل به ${chunks.length} بخش تقسیم شد. در حال اتصال به Groq...`;
 
@@ -206,7 +205,6 @@
                 progressBar.style.width = progress + '%';
                 progressPercent.innerText = progress + '%';
 
-                // وقفه ۷ ثانیه‌ای برای جلوگیری از ارورهای Rate Limit در پلن رایگان Groq
                 if (i < chunks.length - 1) {
                     statusText.innerText = 'اعمال وقفه برای مدیریت محدودیت‌های Groq...';
                     await sleep(7000); 
@@ -255,7 +253,6 @@
         
         const chunks = [];
         let currentChunk = [];
-        // ارسال هر 20 بلاک برای رعایت دقیق‌تر محدودیت توکن در Groq
         const BATCH_SIZE = 20; 
 
         for (let i = 0; i < blocks.length; i++) {
@@ -280,7 +277,6 @@
         return cleanText.trim();
     }
 
-    // تابع اصلی برای ارتباط با API پلتفرم Groq
     async function callGroqAPI(textToTranslate, fileType, apiKey, maxRetries = 4) {
         const systemInstruction = `
 شما یک مترجم کاملاً حرفه‌ای و کاربلد هستید. وظیفه شما این است که محتوای ارائه شده را به زبان فارسی ساده، روان، سلیس و کاملاً گویا ترجمه کنید.
@@ -293,9 +289,8 @@
 
         const url = 'https://api.groq.com/openai/v1/chat/completions';
         
-        // ساختار Payload بر اساس استاندارد OpenAI
         const payload = {
-            model: "llama-3.1-70b-versatile", // قدرتمندترین مدل موجود در Groq برای استدلال و ترجمه
+            model: "llama-3.3-70b-versatile", // مدل به‌روزرسانی شده
             messages: [
                 { role: "system", content: systemInstruction },
                 { role: "user", content: textToTranslate }
@@ -309,7 +304,7 @@
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}` // احراز هویت در Groq به این شکل است
+                        'Authorization': `Bearer ${apiKey}` 
                     },
                     body: JSON.stringify(payload)
                 });
@@ -318,10 +313,8 @@
                     const errorData = await response.json();
                     const errorMessage = errorData.error?.message || 'خطای ناشناخته';
                     
-                    // بررسی ارور 429 (محدودیت درخواست یا Rate Limit) در Groq
                     if (response.status === 429 || response.status === 503) {
                         if (attempt < maxRetries) {
-                            // در Groq معمولاً ارور 429 به سرعت رخ می‌دهد، بنابراین زمان وقفه را طولانی‌تر می‌کنیم
                             const waitTime = attempt * 8000; 
                             statusText.innerText = `محدودیت درخواست Groq. تلاش مجدد پس از ${waitTime/1000} ثانیه... (تلاش ${attempt} از ${maxRetries})`;
                             await sleep(waitTime);
