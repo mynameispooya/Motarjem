@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مترجم هوشمند فایل و زیرنویس (Gemini)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h1 {
+            text-align: center;
+            color: #1a73e8;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="file"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+            direction: ltr;
+            text-align: left;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #1557b0;
+        }
+        button:disabled {
+            background-color: #a0c1f2;
+            cursor: not-allowed;
+        }
+        #downloadBtn {
+            background-color: #34a853;
+            margin-top: 15px;
+        }
+        #downloadBtn:hover {
+            background-color: #2b803e;
+        }
+        /* استایل‌های مربوط به نوار پیشرفت */
+        .progress-wrapper {
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 25px;
+            position: relative;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #34a853;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #000;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .status {
+            text-align: center;
+            font-weight: bold;
+            color: #555;
+            margin-top: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>مترجم فایل (TXT, SRT, VTT)</h1>
+    
+    <div class="form-group">
+        <label for="apiKey">کلید API جمینای (Gemini API Key):</label>
+        <input type="text" id="apiKey" placeholder="کلید API خود را اینجا وارد کنید..." autocomplete="off">
+    </div>
+
+    <div class="form-group">
+        <label for="fileInput">انتخاب فایل (.txt, .srt, .vtt):</label>
+        <input type="file" id="fileInput" accept=".txt,.srt,.vtt">
+    </div>
+
+    <button id="translateBtn">شروع ترجمه</button>
+
+    <!-- بخش نوار پیشرفت -->
+    <div id="progressSection" class="progress-wrapper hidden">
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+            <div class="progress-text" id="progressPercent">0%</div>
+        </div>
+        <div class="status" id="statusText">در حال آماده‌سازی فایل...</div>
+    </div>
+
+    <div id="resultSection" class="hidden">
+        <div class="form-group" style="margin-top: 30px;">
+            <label>پیش‌نمایش ترجمه:</label>
+            <textarea id="outputPreview" readonly></textarea>
+        </div>
+        <button id="downloadBtn">دانلود فایل ترجمه شده</button>
+    </div>
+</div>
+
+<script>
+    const translateBtn = document.getElementById('translateBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const fileInput = document.getElementById('fileInput');
+    const apiKeyInput = document.getElementById('apiKey');
+    const progressSection = document.getElementById('progressSection');
+    const progressBar = document.getElementById('progressBar');
+    const progressPercent = document.getElementById('progressPercent');
+    const statusText = document.getElementById('statusText');
+    const resultSection = document.getElementById('resultSection');
+    const outputPreview = document.getElementById('outputPreview');
+
+    let translatedContent = '';
+    let originalFileName = '';
+    let originalFileExtension = '';
+
+    // تابع ایجاد وقفه (Delay)
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    translateBtn.addEventListener('click', async () => {
+        const apiKey = apiKeyInput.value.trim();
+        const file = fileInput.files[0];
+
+        if (!apiKey) {
+            alert('لطفاً ابتدا کلید API جمینای را وارد کنید.');
+            return;
+        }
+        if (!file) {
+            alert('لطفاً یک فایل برای ترجمه انتخاب کنید.');
+            return;
+        }
+
+        originalFileName = file.name;
+        originalFileExtension = originalFileName.split('.').pop().toLowerCase();
+
+        translateBtn.disabled = true;
+        resultSection.classList.add('hidden');
+        progressSection.classList.remove('hidden');
+        progressBar.style.width = '0%';
+        progressPercent.innerText = '0%';
+        translatedContent = '';
+
+        try {
+            const fileContent = await readFileAsync(file);
+            
+            // تقسیم فایل به بخش‌های کوچکتر برای جلوگیری از اورلود شدن API
+            const chunks = splitIntoChunks(fileContent, originalFileExtension);
+            statusText.innerText = `فایل به ${chunks.length} بخش تقسیم شد. در حال ارتباط با جمینای...`;
+
+            for (let i = 0; i < chunks.length; i++) {
+                const chunk = chunks[i];
+                statusText.innerText = `در حال ترجمه بخش ${i + 1} از ${chunks.length}...`;
+                
+                const translatedChunk = await callGeminiAPI(chunk, originalFileExtension, apiKey);
+                const cleanedChunk = cleanMarkdownFormatting(translatedChunk);
+                
+                translatedContent += cleanedChunk + '\n\n';
+
+                // به‌روزرسانی نوار پیشرفت
+                const progress = Math.round(((i + 1) / chunks.length) * 100);
+                progressBar.style.width = progress + '%';
+                progressPercent.innerText = progress + '%';
+
+                // ایجاد وقفه 5 ثانیه‌ای بین درخواست‌ها برای جلوگیری از ارور Rate Limit 
+                // (مگر اینکه بخش آخر باشد)
+                if (i < chunks.length - 1) {
+                    statusText.innerText = 'اعمال وقفه برای جلوگیری از مسدود شدن API...';
+                    await sleep(5000); 
+                }
+            }
+
+            statusText.innerText = 'ترجمه با موفقیت به پایان رسید!';
+            outputPreview.value = translatedContent.trim();
+            resultSection.classList.remove('hidden');
+
+        } catch (error) {
+            statusText.innerText = 'خطا در فرآیند ترجمه!';
+            alert('خطا در ترجمه: ' + error.message);
+        } finally {
+            translateBtn.disabled = false;
+        }
+    });
+
+    downloadBtn.addEventListener('click', () => {
+        if (!translatedContent) return;
+        
+        const newFileName = originalFileName.replace(`.${originalFileExtension}`, `_Persian.${originalFileExtension}`);
+        const blob = new Blob([translatedContent.trim()], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = newFileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
+    function readFileAsync(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('خطا در خواندن فایل'));
+            reader.readAsText(file, 'UTF-8');
+        });
+    }
+
+    // تابع تقسیم‌بندی فایل به بلاک‌ها
+    function splitIntoChunks(text, extension) {
+        // یکسان‌سازی فرمت خطوط
+        const normalizedText = text.replace(/\r\n/g, '\n');
+        
+        // در فایل‌های زیرنویس، بلاک‌ها با دو خط خالی جدا می‌شوند
+        const blocks = normalizedText.split('\n\n').filter(block => block.trim() !== '');
+        
+        const chunks = [];
+        let currentChunk = [];
+        
+        // ارسال هر 30 بلاک دیالوگ در یک درخواست (حدوداً 100 تا 150 خط) برای حفظ کیفیت و مصرف بهینه
+        const BATCH_SIZE = 30; 
+
+        for (let i = 0; i < blocks.length; i++) {
+            currentChunk.push(blocks[i]);
+            if (currentChunk.length >= BATCH_SIZE) {
+                chunks.push(currentChunk.join('\n\n'));
+                currentChunk = [];
+            }
+        }
+        
+        if (currentChunk.length > 0) {
+            chunks.push(currentChunk.join('\n\n'));
+        }
+        
+        return chunks;
+    }
+
+    function cleanMarkdownFormatting(text) {
+        let cleanText = text.trim();
+        cleanText = cleanText.replace(/^```[a-zA-Z]*\n/gm, '');
+        cleanText = cleanText.replace(/```$/g, '');
+        return cleanText.trim();
+    }
+
+    async function callGeminiAPI(textToTranslate, fileType, apiKey) {
+        const systemInstruction = `
+شما یک مترجم کاملاً حرفه‌ای و کاربلد هستید. وظیفه شما این است که محتوای ارائه شده را به زبان فارسی ساده، روان، سلیس و کاملاً گویا ترجمه کنید.
+انگار که یک مترجم انسانی خبره این کار را انجام داده است.
+
+قوانین بسیار مهم که باید رعایت کنید:
+1. فرمت فایل فعلی ${fileType.toUpperCase()} است. شما باید استایل، ساختار، زمان‌بندی‌ها (timestamps) و شماره‌گذاری‌های خطوط را دقیقاً و بدون یک کاراکتر تغییر حفظ کنید.
+2. فقط و فقط متن‌ها و دیالوگ‌ها را ترجمه کنید و به کدهای زمانی یا ساختار فایل دست نزنید.
+3. هیچ توضیح اضافه، مقدمه، موخره یا تگ مارک‌داون در خروجی ننویسید. مستقیماً خود فایل را با ساختار اصلی اما با متن فارسی برگردانید.
+`;
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        
+        const payload = {
+            system_instruction: {
+                parts: [{ text: systemInstruction }]
+            },
+            contents: [{
+                parts: [{ text: textToTranslate }]
+            }],
+            generationConfig: {
+                temperature: 0.3
+            }
+        };
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            // اگر خطای محدودیت رخ داد، پیام شفاف‌تری نمایش دهیم
+            if (response.status === 429) {
+                throw new Error('محدودیت تعداد درخواست API (Rate Limit) رخ داد. لطفاً چند دقیقه بعد مجدداً تلاش کنید.');
+            }
+            throw new Error(errorData.error?.message || 'خطای ناشناخته در ارتباط با API');
+        }
+
+        const data = await response.json();
+        if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts.length > 0) {
+            return data.candidates[0].content.parts[0].text;
+        } else {
+            throw new Error('پاسخ معتبری از API دریافت نشد.');
+        }
+    }
+</script>
+
+</body>
+</html>
