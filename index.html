@@ -74,7 +74,6 @@
         #downloadBtn:hover {
             background-color: #2b803e;
         }
-        /* استایل‌های مربوط به نوار پیشرفت */
         .progress-wrapper {
             margin-top: 25px;
             margin-bottom: 15px;
@@ -130,7 +129,6 @@
 
     <button id="translateBtn">شروع ترجمه</button>
 
-    <!-- بخش نوار پیشرفت -->
     <div id="progressSection" class="progress-wrapper hidden">
         <div class="progress-container">
             <div class="progress-bar" id="progressBar"></div>
@@ -164,7 +162,6 @@
     let originalFileName = '';
     let originalFileExtension = '';
 
-    // تابع ایجاد وقفه (Delay)
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     translateBtn.addEventListener('click', async () => {
@@ -193,26 +190,21 @@
         try {
             const fileContent = await readFileAsync(file);
             
-            // تقسیم فایل به بخش‌های کوچکتر برای جلوگیری از اورلود شدن API
             const chunks = splitIntoChunks(fileContent, originalFileExtension);
             statusText.innerText = `فایل به ${chunks.length} بخش تقسیم شد. در حال ارتباط با جمینای...`;
 
             for (let i = 0; i < chunks.length; i++) {
-                const chunk = chunks[i];
                 statusText.innerText = `در حال ترجمه بخش ${i + 1} از ${chunks.length}...`;
                 
-                const translatedChunk = await callGeminiAPI(chunk, originalFileExtension, apiKey);
+                const translatedChunk = await callGeminiAPI(chunks[i], originalFileExtension, apiKey);
                 const cleanedChunk = cleanMarkdownFormatting(translatedChunk);
                 
                 translatedContent += cleanedChunk + '\n\n';
 
-                // به‌روزرسانی نوار پیشرفت
                 const progress = Math.round(((i + 1) / chunks.length) * 100);
                 progressBar.style.width = progress + '%';
                 progressPercent.innerText = progress + '%';
 
-                // ایجاد وقفه 5 ثانیه‌ای بین درخواست‌ها برای جلوگیری از ارور Rate Limit 
-                // (مگر اینکه بخش آخر باشد)
                 if (i < chunks.length - 1) {
                     statusText.innerText = 'اعمال وقفه برای جلوگیری از مسدود شدن API...';
                     await sleep(5000); 
@@ -255,18 +247,12 @@
         });
     }
 
-    // تابع تقسیم‌بندی فایل به بلاک‌ها
     function splitIntoChunks(text, extension) {
-        // یکسان‌سازی فرمت خطوط
         const normalizedText = text.replace(/\r\n/g, '\n');
-        
-        // در فایل‌های زیرنویس، بلاک‌ها با دو خط خالی جدا می‌شوند
         const blocks = normalizedText.split('\n\n').filter(block => block.trim() !== '');
         
         const chunks = [];
         let currentChunk = [];
-        
-        // ارسال هر 30 بلاک دیالوگ در یک درخواست (حدوداً 100 تا 150 خط) برای حفظ کیفیت و مصرف بهینه
         const BATCH_SIZE = 30; 
 
         for (let i = 0; i < blocks.length; i++) {
@@ -291,7 +277,7 @@
         return cleanText.trim();
     }
 
-    async function callGeminiAPI(textToTranslate, fileType, apiKey) {
+    async function callGeminiAPI(textToTranslate, fileType, apiKey, maxRetries = 3) {
         const systemInstruction = `
 شما یک مترجم کاملاً حرفه‌ای و کاربلد هستید. وظیفه شما این است که محتوای ارائه شده را به زبان فارسی ساده، روان، سلیس و کاملاً گویا ترجمه کنید.
 انگار که یک مترجم انسانی خبره این کار را انجام داده است.
@@ -316,28 +302,45 @@
             }
         };
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
-        });
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            // اگر خطای محدودیت رخ داد، پیام شفاف‌تری نمایش دهیم
-            if (response.status === 429) {
-                throw new Error('محدودیت تعداد درخواست API (Rate Limit) رخ داد. لطفاً چند دقیقه بعد مجدداً تلاش کنید.');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    const errorMessage = errorData.error?.message || '';
+                    
+                    if (response.status === 503 || response.status === 429 || errorMessage.includes('high demand')) {
+                        if (attempt < maxRetries) {
+                            const waitTime = attempt * 5000; 
+                            statusText.innerText = `سرور شلوغ است. تلاش مجدد پس از ${waitTime/1000} ثانیه... (تلاش ${attempt} از ${maxRetries})`;
+                            await sleep(waitTime);
+                            continue; 
+                        }
+                    }
+                    throw new Error(errorMessage || 'خطای ناشناخته در ارتباط با API');
+                }
+
+                const data = await response.json();
+                if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts.length > 0) {
+                    return data.candidates[0].content.parts[0].text;
+                } else {
+                    throw new Error('پاسخ معتبری از API دریافت نشد.');
+                }
+
+            } catch (error) {
+                if (attempt < maxRetries && !error.message.includes('API')) {
+                     await sleep(5000);
+                     continue;
+                }
+                if (attempt === maxRetries) {
+                    throw error;
+                }
             }
-            throw new Error(errorData.error?.message || 'خطای ناشناخته در ارتباط با API');
-        }
-
-        const data = await response.json();
-        if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts.length > 0) {
-            return data.candidates[0].content.parts[0].text;
-        } else {
-            throw new Error('پاسخ معتبری از API دریافت نشد.');
         }
     }
 </script>
