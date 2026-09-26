@@ -1,348 +1,677 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مترجم هوشمند فایل و زیرنویس (Groq - Llama 81.92)</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
-            margin: 0;
-            padding: 40px 20px;
-            line-height: 1.6;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        h1 {
-            text-align: center;
-            color: #f55036; 
-            margin-bottom: 30px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-        input[type="text"], input[type="file"], textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-family: inherit;
-        }
-        textarea {
-            resize: vertical;
-            min-height: 150px;
-            direction: ltr;
-            text-align: left;
-        }
-        button {
-            width: 100%;
-            padding: 14px;
-            background-color: #f55036;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            font-weight: bold;
-        }
-        button:hover {
-            background-color: #d64028;
-        }
-        button:disabled {
-            background-color: #fbc6c0;
-            cursor: not-allowed;
-        }
-        #downloadBtn {
-            background-color: #34a853;
-            margin-top: 15px;
-        }
-        #downloadBtn:hover {
-            background-color: #2b803e;
-        }
-        .progress-wrapper {
-            margin-top: 25px;
-            margin-bottom: 15px;
-        }
-        .progress-container {
-            width: 100%;
-            background-color: #e0e0e0;
-            border-radius: 8px;
-            overflow: hidden;
-            height: 25px;
-            position: relative;
-        }
-        .progress-bar {
-            height: 100%;
-            background-color: #34a853;
-            width: 0%;
-            transition: width 0.4s ease;
-        }
-        .progress-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #000;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        .status {
-            text-align: center;
-            font-weight: bold;
-            color: #555;
-            margin-top: 10px;
-        }
-        .hidden {
-            display: none;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مترجم زیرنویس و متن به فارسی ساده</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#15171a;
+    --panel:#1e2124;
+    --panel-2:#23262a;
+    --border:#2c3034;
+    --text:#ece9e4;
+    --muted:#8b9098;
+    --gold:#d8a44c;
+    --gold-dim:#8a7040;
+    --teal:#4fb8ae;
+    --red:#e0645a;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #1c2024 0%, var(--bg) 60%);
+    color:var(--text);
+    font-family:'Vazirmatn', sans-serif;
+    min-height:100vh;
+    padding:48px 20px 80px;
+  }
+  .mono{font-family:'JetBrains Mono', monospace;}
+  .wrap{max-width:720px;margin:0 auto;}
+
+  /* ---------- Hero ---------- */
+  .hero{text-align:center;margin-bottom:40px;}
+  .ticks{
+    display:flex;justify-content:center;gap:6px;margin-bottom:22px;
+    opacity:.55;
+  }
+  .ticks span{
+    width:2px;height:14px;background:var(--gold-dim);border-radius:1px;
+  }
+  .ticks span:nth-child(3n){height:22px;background:var(--gold);}
+  .hero h1{
+    font-size:28px;font-weight:700;margin:0 0 10px;letter-spacing:-.2px;
+  }
+  .hero p{
+    color:var(--muted);font-size:15px;line-height:1.9;margin:0 auto;max-width:520px;
+  }
+
+  /* ---------- Steps ---------- */
+  .step{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:22px 22px 24px;
+    margin-bottom:16px;
+    position:relative;
+  }
+  .step.disabled{opacity:.45;pointer-events:none;}
+  .step-head{
+    display:flex;align-items:center;gap:12px;margin-bottom:16px;
+  }
+  .step-num{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;color:var(--bg);
+    background:var(--gold);
+    width:24px;height:24px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;font-weight:600;
+  }
+  .step-title{font-size:15.5px;font-weight:600;}
+  .step-sub{color:var(--muted);font-size:13px;margin:2px 0 0;}
+
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:7px;}
+  input[type=password], input[type=text], select{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:8px;
+    padding:11px 13px;
+    font-size:14px;
+    font-family:'JetBrains Mono', monospace;
+    direction:ltr;
+    text-align:left;
+  }
+  select{font-family:'Vazirmatn',sans-serif;direction:rtl;text-align:right;}
+  input:focus, select:focus{outline:2px solid var(--gold-dim);outline-offset:1px;}
+
+  .key-row{display:flex;gap:8px;}
+  .key-row input{flex:1;}
+  .icon-btn{
+    background:var(--panel-2);border:1px solid var(--border);color:var(--muted);
+    border-radius:8px;padding:0 13px;cursor:pointer;font-size:13px;
+  }
+  .icon-btn:hover{color:var(--text);border-color:var(--gold-dim);}
+
+  .hint{font-size:12px;color:var(--muted);margin-top:9px;line-height:1.8;}
+
+  .field-row{display:flex;gap:12px;margin-top:14px;}
+  .field-row > div{flex:1;}
+
+  /* ---------- Dropzone ---------- */
+  .dropzone{
+    border:1.5px dashed var(--border);
+    border-radius:8px;
+    padding:26px 16px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s;
+  }
+  .dropzone:hover, .dropzone.drag{border-color:var(--gold-dim);}
+  .dropzone .fname{font-family:'JetBrains Mono',monospace;color:var(--gold);font-size:13.5px;}
+  .dropzone .fmt{font-size:12px;color:var(--muted);margin-top:6px;}
+  .dropzone .ph{color:var(--muted);font-size:13.5px;}
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--gold);color:#181a1c;border:none;
+    font-family:'Vazirmatn',sans-serif;font-weight:600;font-size:14.5px;
+    padding:12px 22px;border-radius:8px;cursor:pointer;
+    width:100%;
+  }
+  .btn:disabled{background:var(--panel-2);color:var(--muted);cursor:not-allowed;}
+  .btn.secondary{
+    background:transparent;border:1px solid var(--border);color:var(--text);width:auto;
+  }
+  .btn-row{display:flex;gap:10px;margin-top:16px;}
+  .btn-row .btn{width:auto;flex:1;}
+
+  /* ---------- Progress ---------- */
+  .progress-wrap{margin-top:16px;}
+  .progress-bar{
+    height:8px;background:var(--panel-2);border-radius:5px;overflow:hidden;
+    border:1px solid var(--border);
+  }
+  .progress-fill{
+    height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--teal));
+    width:0%;transition:width .25s;
+  }
+  .progress-meta{
+    display:flex;justify-content:space-between;margin-top:8px;
+    font-size:12.5px;color:var(--muted);font-family:'JetBrains Mono',monospace;
+  }
+  .status-line{font-size:13px;color:var(--muted);margin-top:10px;min-height:18px;}
+  .status-line.err{color:var(--red);}
+
+  /* ---------- Preview / output ---------- */
+  textarea.preview{
+    width:100%;min-height:220px;max-height:360px;
+    background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;line-height:1.75;direction:ltr;text-align:left;resize:vertical;
+  }
+
+  /* ---------- Advanced settings ---------- */
+  details.adv{margin-top:14px;}
+  details.adv summary{
+    cursor:pointer;font-size:12.5px;color:var(--muted);list-style:none;
+    display:flex;align-items:center;gap:6px;
+  }
+  details.adv summary::-webkit-details-marker{display:none;}
+  details.adv summary:before{content:"›";transition:transform .15s;}
+  details.adv[open] summary:before{transform:rotate(90deg);}
+  .adv-body{display:flex;gap:12px;margin-top:12px;}
+  .adv-body > div{flex:1;}
+  .adv-body input{font-size:13px;padding:9px 11px;}
+
+  .footnote{
+    text-align:center;color:var(--muted);font-size:12px;margin-top:26px;line-height:1.9;
+  }
+</style>
 </head>
 <body>
+<div class="wrap">
 
-<div class="container">
-    <h1>مترجم فایل (Groq API - Llama 3.3)</h1>
-    
-    <div class="form-group">
-        <label for="apiKey">کلید API پلتفرم گراق (Groq API Key):</label>
-        <input type="text" id="apiKey" placeholder="gsk_..." autocomplete="off">
+  <div class="hero">
+    <div class="ticks">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <h1>مترجم زیرنویس و متن</h1>
+    <p>فایل VTT، SRT یا TXT را آپلود کنید تا با استفاده از Claude، به فارسیِ ساده، روان و کاملاً قابل‌فهم — درست مثل کار یک مترجم حرفه‌ای — ترجمه شود؛ با حفظ کامل زمان‌بندی و ساختار فایل.</p>
+  </div>
+
+  <!-- Step 1: API key -->
+  <div class="step" id="step1">
+    <div class="step-head">
+      <div class="step-num">۱</div>
+      <div>
+        <div class="step-title">اتصال به Claude</div>
+        <div class="step-sub">کلید API شخصی شما، فقط در همین صفحه و در حافظه مرورگر نگه‌داری می‌شود</div>
+      </div>
     </div>
 
-    <div class="form-group">
-        <label for="fileInput">انتخاب فایل (.txt, .srt, .vtt):</label>
-        <input type="file" id="fileInput" accept=".txt,.srt,.vtt">
+    <label for="apiKey">Claude API Key</label>
+    <div class="key-row">
+      <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off">
+      <button class="icon-btn" id="toggleKey" type="button">نمایش</button>
     </div>
 
-    <button id="translateBtn">شروع ترجمه</button>
+    <div class="field-row">
+      <div>
+        <label for="modelSelect">مدل</label>
+        <select id="modelSelect">
+          <option value="claude-sonnet-5" selected>Claude Sonnet 5 — کیفیت بالاتر</option>
+          <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — سریع‌تر و ارزان‌تر</option>
+        </select>
+      </div>
+    </div>
 
-    <div id="progressSection" class="progress-wrapper hidden">
-        <div class="progress-container">
-            <div class="progress-bar" id="progressBar"></div>
-            <div class="progress-text" id="progressPercent">0%</div>
+    <div class="hint">
+      این کلید مستقیماً از مرورگر شما به سرور Anthropic ارسال می‌شود، جایی دیگر ذخیره نمی‌شود و با بستن یا رفرش صفحه پاک می‌شود. توجه داشته باشید که استفاده از API با همین کلید، بر اساس تعرفه‌ی حساب Anthropic خودتان محاسبه و از اعتبار آن کسر می‌شود؛ این ابزار مستقل از Claude.ai اجرا می‌شود و اعتباری از حساب Claude.ai شما کم نمی‌کند.
+    </div>
+
+    <button class="btn" id="connectBtn" style="margin-top:16px;">اتصال و ادامه</button>
+    <div class="status-line" id="connectStatus"></div>
+  </div>
+
+  <!-- Step 2: upload -->
+  <div class="step disabled" id="step2">
+    <div class="step-head">
+      <div class="step-num">۲</div>
+      <div>
+        <div class="step-title">آپلود فایل</div>
+        <div class="step-sub">فرمت‌های پشتیبانی‌شده: ‎.vtt ‎.srt ‎.txt</div>
+      </div>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <div class="ph" id="dzPlaceholder">فایل را اینجا رها کنید، یا کلیک کنید</div>
+      <div id="dzFileInfo" style="display:none;">
+        <div class="fname" id="dzFileName"></div>
+        <div class="fmt" id="dzFileFormat"></div>
+      </div>
+    </div>
+    <input type="file" id="fileInput" accept=".vtt,.srt,.txt" style="display:none;">
+
+    <details class="adv">
+      <summary>تنظیمات پیشرفته</summary>
+      <div class="adv-body">
+        <div>
+          <label for="delayMs">فاصله بین درخواست‌ها (میلی‌ثانیه)</label>
+          <input type="text" id="delayMs" value="1500">
         </div>
-        <div class="status" id="statusText">در حال آماده‌سازی فایل...</div>
+        <div>
+          <label for="batchSize">تعداد بلوک در هر درخواست</label>
+          <input type="text" id="batchSize" value="25">
+        </div>
+      </div>
+    </details>
+
+    <div class="btn-row">
+      <button class="btn" id="translateBtn" disabled>شروع ترجمه</button>
+      <button class="btn secondary" id="stopBtn" style="display:none;">توقف</button>
     </div>
 
-    <div id="resultSection" class="hidden">
-        <div class="form-group" style="margin-top: 30px;">
-            <label>پیش‌نمایش ترجمه:</label>
-            <textarea id="outputPreview" readonly></textarea>
-        </div>
-        <button id="downloadBtn">دانلود فایل ترجمه شده</button>
+    <div class="progress-wrap" id="progressWrap" style="display:none;">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-meta">
+        <span id="progressPct">۰٪</span>
+        <span id="progressCount" class="mono"></span>
+      </div>
+      <div class="status-line" id="translateStatus"></div>
     </div>
+  </div>
+
+  <!-- Step 3: result -->
+  <div class="step disabled" id="step3">
+    <div class="step-head">
+      <div class="step-num">۳</div>
+      <div>
+        <div class="step-title">نتیجه ترجمه</div>
+        <div class="step-sub">پیش‌نمایش خروجی، با همان فرمت فایل اصلی</div>
+      </div>
+    </div>
+    <textarea class="preview" id="previewArea" readonly></textarea>
+    <div class="btn-row">
+      <button class="btn" id="downloadBtn">دانلود فایل ترجمه‌شده</button>
+    </div>
+  </div>
+
+  <div class="footnote">
+    همه‌چیز در همین مرورگر شما اجرا می‌شود؛ هیچ فایلی به سروری غیر از Anthropic ارسال نمی‌شود.
+  </div>
+
 </div>
 
 <script>
-    const translateBtn = document.getElementById('translateBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const fileInput = document.getElementById('fileInput');
-    const apiKeyInput = document.getElementById('apiKey');
-    const progressSection = document.getElementById('progressSection');
-    const progressBar = document.getElementById('progressBar');
-    const progressPercent = document.getElementById('progressPercent');
-    const statusText = document.getElementById('statusText');
-    const resultSection = document.getElementById('resultSection');
-    const outputPreview = document.getElementById('outputPreview');
+(function(){
+  "use strict";
 
-    let translatedContent = '';
-    let originalFileName = '';
-    let originalFileExtension = '';
+  // ---------------- State ----------------
+  let apiKey = "";
+  let selectedModel = "claude-sonnet-5";
+  let uploadedFile = null;   // {name, ext, content}
+  let running = false;
+  let stopRequested = false;
 
-    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  // ---------------- Elements ----------------
+  const el = id => document.getElementById(id);
+  const apiKeyInput = el("apiKey");
+  const toggleKeyBtn = el("toggleKey");
+  const modelSelect = el("modelSelect");
+  const connectBtn = el("connectBtn");
+  const connectStatus = el("connectStatus");
+  const step2 = el("step2");
+  const step3 = el("step3");
+  const dropzone = el("dropzone");
+  const fileInput = el("fileInput");
+  const dzPlaceholder = el("dzPlaceholder");
+  const dzFileInfo = el("dzFileInfo");
+  const dzFileName = el("dzFileName");
+  const dzFileFormat = el("dzFileFormat");
+  const translateBtn = el("translateBtn");
+  const stopBtn = el("stopBtn");
+  const progressWrap = el("progressWrap");
+  const progressFill = el("progressFill");
+  const progressPct = el("progressPct");
+  const progressCount = el("progressCount");
+  const translateStatus = el("translateStatus");
+  const previewArea = el("previewArea");
+  const downloadBtn = el("downloadBtn");
+  const delayInput = el("delayMs");
+  const batchInput = el("batchSize");
 
-    translateBtn.addEventListener('click', async () => {
-        const apiKey = apiKeyInput.value.trim();
-        const file = fileInput.files[0];
+  // ---------------- Step 1: connect ----------------
+  toggleKeyBtn.addEventListener("click", () => {
+    const showing = apiKeyInput.type === "text";
+    apiKeyInput.type = showing ? "password" : "text";
+    toggleKeyBtn.textContent = showing ? "نمایش" : "پنهان";
+  });
 
-        if (!apiKey) {
-            alert('لطفاً ابتدا کلید API پلتفرم Groq را وارد کنید.');
-            return;
-        }
-        if (!file) {
-            alert('لطفاً یک فایل برای ترجمه انتخاب کنید.');
-            return;
-        }
+  connectBtn.addEventListener("click", async () => {
+    const key = apiKeyInput.value.trim();
+    if (!key) {
+      setStatus(connectStatus, "کلید API را وارد کنید.", true);
+      return;
+    }
+    apiKey = key;
+    selectedModel = modelSelect.value;
+    connectBtn.disabled = true;
+    connectBtn.textContent = "در حال بررسی اتصال...";
+    setStatus(connectStatus, "", false);
 
-        originalFileName = file.name;
-        originalFileExtension = originalFileName.split('.').pop().toLowerCase();
+    try {
+      await callClaude(apiKey, selectedModel, "Reply with exactly one word: OK", "OK", 16);
+      setStatus(connectStatus, "اتصال برقرار شد.", false);
+      step2.classList.remove("disabled");
+      connectBtn.textContent = "متصل شد ✓";
+    } catch (e) {
+      connectBtn.disabled = false;
+      connectBtn.textContent = "اتصال و ادامه";
+      setStatus(connectStatus, "اتصال ناموفق بود: " + describeError(e), true);
+    }
+  });
 
-        translateBtn.disabled = true;
-        resultSection.classList.add('hidden');
-        progressSection.classList.remove('hidden');
-        progressBar.style.width = '0%';
-        progressPercent.innerText = '0%';
-        translatedContent = '';
+  modelSelect.addEventListener("change", () => { selectedModel = modelSelect.value; });
 
-        try {
-            const fileContent = await readFileAsync(file);
-            
-            const chunks = splitIntoChunks(fileContent, originalFileExtension);
-            statusText.innerText = `فایل به ${chunks.length} بخش تقسیم شد. در حال اتصال به Groq...`;
+  // ---------------- Step 2: upload ----------------
+  dropzone.addEventListener("click", () => fileInput.click());
+  dropzone.addEventListener("dragover", e => { e.preventDefault(); dropzone.classList.add("drag"); });
+  dropzone.addEventListener("dragleave", () => dropzone.classList.remove("drag"));
+  dropzone.addEventListener("drop", e => {
+    e.preventDefault();
+    dropzone.classList.remove("drag");
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener("change", e => {
+    if (e.target.files.length) handleFile(e.target.files[0]);
+  });
 
-            for (let i = 0; i < chunks.length; i++) {
-                statusText.innerText = `در حال ترجمه بخش ${i + 1} از ${chunks.length}...`;
-                
-                const translatedChunk = await callGroqAPI(chunks[i], originalFileExtension, apiKey);
-                const cleanedChunk = cleanMarkdownFormatting(translatedChunk);
-                
-                translatedContent += cleanedChunk + '\n\n';
+  function handleFile(file) {
+    const ext = (file.name.split(".").pop() || "").toLowerCase();
+    if (!["vtt","srt","txt"].includes(ext)) {
+      alert("فقط فایل‌های vtt، srt یا txt پشتیبانی می‌شوند.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      uploadedFile = { name: file.name, ext, content: reader.result };
+      dzPlaceholder.style.display = "none";
+      dzFileInfo.style.display = "block";
+      dzFileName.textContent = file.name;
+      dzFileFormat.textContent = "فرمت شناسایی‌شده: " + ext.toUpperCase();
+      translateBtn.disabled = false;
+    };
+    reader.readAsText(file, "UTF-8");
+  }
 
-                const progress = Math.round(((i + 1) / chunks.length) * 100);
-                progressBar.style.width = progress + '%';
-                progressPercent.innerText = progress + '%';
+  // ---------------- Translation orchestration ----------------
+  translateBtn.addEventListener("click", startTranslation);
+  stopBtn.addEventListener("click", () => { stopRequested = true; });
 
-                if (i < chunks.length - 1) {
-                    statusText.innerText = 'اعمال وقفه برای مدیریت محدودیت‌های Groq...';
-                    await sleep(7000); 
-                }
-            }
+  async function startTranslation() {
+    if (!uploadedFile || running) return;
+    running = true;
+    stopRequested = false;
+    translateBtn.disabled = true;
+    stopBtn.style.display = "inline-flex";
+    progressWrap.style.display = "block";
+    setStatus(translateStatus, "در حال آماده‌سازی فایل...", false);
+    updateProgress(0, 0, 0);
 
-            statusText.innerText = 'ترجمه با موفقیت به پایان رسید!';
-            outputPreview.value = translatedContent.trim();
-            resultSection.classList.remove('hidden');
+    const delayMs = Math.max(0, parseInt(delayInput.value, 10) || 1500);
+    const batchSize = Math.max(1, parseInt(batchInput.value, 10) || 25);
 
-        } catch (error) {
-            statusText.innerText = 'خطا در فرآیند ترجمه!';
-            alert('خطا در ترجمه: ' + error.message);
-        } finally {
-            translateBtn.disabled = false;
-        }
+    try {
+      const isSubtitle = uploadedFile.ext === "vtt" || uploadedFile.ext === "srt";
+      let resultText;
+      if (isSubtitle) {
+        resultText = await translateSubtitle(uploadedFile.content, delayMs, batchSize);
+      } else {
+        resultText = await translateTxt(uploadedFile.content, delayMs, batchSize);
+      }
+
+      if (stopRequested) {
+        setStatus(translateStatus, "ترجمه متوقف شد.", true);
+      } else {
+        setStatus(translateStatus, "ترجمه با موفقیت انجام شد.", false);
+        previewArea.value = resultText;
+        step3.classList.remove("disabled");
+        downloadBtn.onclick = () => downloadResult(resultText);
+      }
+    } catch (e) {
+      setStatus(translateStatus, "خطا: " + describeError(e), true);
+    } finally {
+      running = false;
+      translateBtn.disabled = false;
+      stopBtn.style.display = "none";
+    }
+  }
+
+  // ---------------- Subtitle (VTT / SRT) handling ----------------
+  function parseSubtitleBlocks(content) {
+    const normalized = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    const blocks = normalized.split(/\n\s*\n/);
+    const cueMeta = []; // { blockIndex, header:[], timeLine, textLines:[] }
+    blocks.forEach((block, i) => {
+      const lines = block.split("\n");
+      const timeIdx = lines.findIndex(l => l.includes("-->"));
+      if (timeIdx === -1) return; // preamble / NOTE / non-cue block, kept verbatim
+      cueMeta.push({
+        blockIndex: i,
+        header: lines.slice(0, timeIdx),
+        timeLine: lines[timeIdx],
+        textLines: lines.slice(timeIdx + 1)
+      });
     });
+    return { blocks, cueMeta };
+  }
 
-    downloadBtn.addEventListener('click', () => {
-        if (!translatedContent) return;
-        
-        const newFileName = originalFileName.replace(`.${originalFileExtension}`, `_Persian.${originalFileExtension}`);
-        const blob = new Blob([translatedContent.trim()], { type: 'text/plain;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = newFileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+  async function translateSubtitle(content, delayMs, batchSize) {
+    const { blocks, cueMeta } = parseSubtitleBlocks(content);
+    if (!cueMeta.length) throw new Error("هیچ بلوک زمان‌بندی‌شده‌ای در فایل پیدا نشد.");
+
+    const batches = [];
+    for (let i = 0; i < cueMeta.length; i += batchSize) {
+      batches.push(cueMeta.slice(i, i + batchSize));
+    }
+
+    const system = subtitleSystemPrompt();
+    let done = 0;
+
+    for (const batch of batches) {
+      if (stopRequested) break;
+      const prompt = batch.map((c, idx) => `[[${idx}]]\n${c.textLines.join("\n")}`).join("\n\n");
+      const raw = await callClaudeWithRetry(apiKey, selectedModel, system, prompt, 4096, msg => {
+        setStatus(translateStatus, msg, false);
+      });
+      const translations = splitTaggedResponse(raw, batch.length);
+
+      batch.forEach((c, idx) => {
+        const translated = (translations[idx] || c.textLines.join("\n")).trim();
+        blocks[c.blockIndex] = [...c.header, c.timeLine, ...translated.split("\n")].join("\n");
+      });
+
+      done += batch.length;
+      updateProgress(done, cueMeta.length, batches.indexOf(batch) + 1, batches.length);
+      if (!stopRequested && delayMs > 0) await sleep(delayMs);
+    }
+
+    return blocks.join("\n\n");
+  }
+
+  // ---------------- Plain text handling ----------------
+  function splitTxtIntoChunks(content, maxChars) {
+    const normalized = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    let paragraphs = normalized.split(/\n\s*\n/);
+    const chunks = [];
+    for (const p of paragraphs) {
+      if (p.length <= maxChars) { chunks.push(p); continue; }
+      // paragraph too long: split on sentence-ish boundaries
+      let remaining = p;
+      while (remaining.length > maxChars) {
+        let cut = remaining.lastIndexOf(". ", maxChars);
+        if (cut < maxChars * 0.4) cut = remaining.lastIndexOf(" ", maxChars);
+        if (cut < 1) cut = maxChars;
+        chunks.push(remaining.slice(0, cut + 1));
+        remaining = remaining.slice(cut + 1);
+      }
+      if (remaining) chunks.push(remaining);
+    }
+    return chunks;
+  }
+
+  async function translateTxt(content, delayMs, batchSize) {
+    const maxCharsPerChunk = 1200;
+    const chunks = splitTxtIntoChunks(content, maxCharsPerChunk);
+    if (!chunks.length) throw new Error("فایل متنی خالی است.");
+
+    const groups = [];
+    for (let i = 0; i < chunks.length; i += batchSize) {
+      groups.push(chunks.slice(i, i + batchSize));
+    }
+
+    const system = txtSystemPrompt();
+    const translatedChunks = new Array(chunks.length);
+    let done = 0;
+    let globalIdx = 0;
+
+    for (const group of groups) {
+      if (stopRequested) break;
+      const startIdx = globalIdx;
+      const prompt = group.map((c, idx) => `[[${idx}]]\n${c}`).join("\n\n");
+      const raw = await callClaudeWithRetry(apiKey, selectedModel, system, prompt, 4096, msg => {
+        setStatus(translateStatus, msg, false);
+      });
+      const translations = splitTaggedResponse(raw, group.length);
+      group.forEach((c, idx) => {
+        translatedChunks[startIdx + idx] = (translations[idx] || c).trim();
+      });
+      globalIdx += group.length;
+      done += group.length;
+      updateProgress(done, chunks.length, groups.indexOf(group) + 1, groups.length);
+      if (!stopRequested && delayMs > 0) await sleep(delayMs);
+    }
+
+    return translatedChunks.join("\n\n");
+  }
+
+  // ---------------- Prompting ----------------
+  function subtitleSystemPrompt() {
+    return [
+      "You are a professional Persian (Farsi) subtitle translator.",
+      "You will receive several numbered subtitle text blocks, each wrapped like [[N]] followed by its text.",
+      "Translate each block's text into simple, fluent, natural, completely clear spoken Persian — the way a skilled professional human subtitle translator would write it, easy for any Persian speaker to read and understand at a glance.",
+      "Keep each translated block roughly the same number of lines as the source block when reasonable, since it will replace subtitle text shown for a fixed duration.",
+      "Do not translate or alter timestamps, cue numbers, or formatting tags — you are only given the spoken text, not those parts.",
+      "Preserve meaning, tone and any names/numbers accurately; do not add explanations, notes, or extra commentary.",
+      "Respond with ONLY the same [[N]] markers followed by the translated text for each block, in the same order, and nothing else — no preamble, no summary."
+    ].join(" ");
+  }
+
+  function txtSystemPrompt() {
+    return [
+      "You are a professional Persian (Farsi) translator.",
+      "You will receive several numbered text chunks, each wrapped like [[N]] followed by its text.",
+      "Translate each chunk into simple, fluent, natural, completely clear and readable Persian — the way a skilled professional human translator would write it, easy for any Persian speaker to understand, matching the original style and tone (formal, casual, technical, narrative, etc. as appropriate).",
+      "Preserve paragraph meaning, names, and numbers accurately; do not add explanations, notes, or extra commentary.",
+      "Respond with ONLY the same [[N]] markers followed by the translated text for each chunk, in the same order, and nothing else — no preamble, no summary."
+    ].join(" ");
+  }
+
+  function splitTaggedResponse(raw, expectedCount) {
+    const results = new Array(expectedCount).fill("");
+    const re = /\[\[(\d+)\]\]\s*([\s\S]*?)(?=\[\[\d+\]\]|$)/g;
+    let m;
+    while ((m = re.exec(raw)) !== null) {
+      const idx = parseInt(m[1], 10);
+      if (idx >= 0 && idx < expectedCount) results[idx] = m[2].trim();
+    }
+    return results;
+  }
+
+  // ---------------- Claude API ----------------
+  async function callClaude(key, model, system, userContent, maxTokens) {
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: model,
+        max_tokens: maxTokens || 4096,
+        system: system,
+        messages: [{ role: "user", content: userContent }]
+      })
     });
-
-    function readFileAsync(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = () => reject(new Error('خطا در خواندن فایل'));
-            reader.readAsText(file, 'UTF-8');
-        });
+    if (!resp.ok) {
+      let bodyText = "";
+      try { bodyText = await resp.text(); } catch (_) {}
+      const err = new Error(bodyText || ("HTTP " + resp.status));
+      err.status = resp.status;
+      throw err;
     }
+    const data = await resp.json();
+    return (data.content || []).map(b => b.text || "").join("\n");
+  }
 
-    function splitIntoChunks(text, extension) {
-        const normalizedText = text.replace(/\r\n/g, '\n');
-        const blocks = normalizedText.split('\n\n').filter(block => block.trim() !== '');
-        
-        const chunks = [];
-        let currentChunk = [];
-        const BATCH_SIZE = 20; 
-
-        for (let i = 0; i < blocks.length; i++) {
-            currentChunk.push(blocks[i]);
-            if (currentChunk.length >= BATCH_SIZE) {
-                chunks.push(currentChunk.join('\n\n'));
-                currentChunk = [];
-            }
+  async function callClaudeWithRetry(key, model, system, userContent, maxTokens, onWait) {
+    let attempt = 0;
+    while (true) {
+      try {
+        return await callClaude(key, model, system, userContent, maxTokens);
+      } catch (e) {
+        const retriable = e.status === 429 || e.status === 429 || e.status === 503 || e.status === 529;
+        if (retriable && attempt < 6 && !stopRequested) {
+          attempt++;
+          const wait = Math.min(30000, 1500 * Math.pow(2, attempt));
+          if (onWait) onWait(`محدودیت نرخ درخواست — تلاش مجدد در ${Math.round(wait/1000)} ثانیه (تلاش ${attempt})...`);
+          await sleep(wait);
+          continue;
         }
-        
-        if (currentChunk.length > 0) {
-            chunks.push(currentChunk.join('\n\n'));
-        }
-        
-        return chunks;
+        throw e;
+      }
     }
+  }
 
-    function cleanMarkdownFormatting(text) {
-        let cleanText = text.trim();
-        cleanText = cleanText.replace(/^```[a-zA-Z]*\n/gm, '');
-        cleanText = cleanText.replace(/```$/g, '');
-        return cleanText.trim();
+  function describeError(e) {
+    if (e && e.status === 401) return "کلید API نامعتبر است.";
+    if (e && e.status === 429) return "محدودیت نرخ درخواست (rate limit).";
+    if (e && e.message) return e.message.slice(0, 200);
+    return String(e);
+  }
+
+  // ---------------- Helpers ----------------
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  function setStatus(elm, msg, isErr) {
+    elm.textContent = msg;
+    elm.classList.toggle("err", !!isErr);
+  }
+
+  function updateProgress(done, total, batchesDone, batchesTotal) {
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    progressFill.style.width = pct + "%";
+    progressPct.textContent = toFaDigits(pct) + "٪";
+    if (batchesTotal) {
+      progressCount.textContent = `batch ${batchesDone}/${batchesTotal}`;
+    } else {
+      progressCount.textContent = "";
     }
+  }
 
-    async function callGroqAPI(textToTranslate, fileType, apiKey, maxRetries = 4) {
-        const systemInstruction = `
-شما یک مترجم کاملاً حرفه‌ای و کاربلد هستید. وظیفه شما این است که محتوای ارائه شده را به زبان فارسی ساده، روان، سلیس و کاملاً گویا ترجمه کنید.
+  function toFaDigits(n) {
+    const fa = ["۰","۱","۲","۳","۴","۵","۶","۷","۸","۹"];
+    return String(n).replace(/[0-9]/g, d => fa[d]);
+  }
 
-قوانین بسیار مهم که باید رعایت کنید:
-1. فرمت فایل فعلی ${fileType.toUpperCase()} است. شما باید استایل، ساختار، زمان‌بندی‌ها (timestamps) و شماره‌گذاری‌های خطوط را دقیقاً و بدون یک کاراکتر تغییر حفظ کنید.
-2. فقط متن‌ها و دیالوگ‌ها را ترجمه کنید و به کدهای زمانی یا ساختار فایل دست نزنید.
-3. مستقیماً خود فایل را با ساختار اصلی اما با متن فارسی برگردانید و هیچ توضیح اضافه‌ای ندهید.
-`;
+  function downloadResult(text) {
+    const mime = uploadedFile.ext === "txt" ? "text/plain" : "text/vtt";
+    const blob = new Blob([text], { type: mime + ";charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const base = uploadedFile.name.replace(/\.[^.]+$/, "");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${base}-fa.${uploadedFile.ext}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
 
-        const url = 'https://api.groq.com/openai/v1/chat/completions';
-        
-        const payload = {
-            model: "llama-3-70b-8192", // مدل به‌روزرسانی شده
-            messages: [
-                { role: "system", content: systemInstruction },
-                { role: "user", content: textToTranslate }
-            ],
-            temperature: 0.3
-        };
-
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}` 
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    const errorMessage = errorData.error?.message || 'خطای ناشناخته';
-                    
-                    if (response.status === 429 || response.status === 503) {
-                        if (attempt < maxRetries) {
-                            const waitTime = attempt * 8000; 
-                            statusText.innerText = `محدودیت درخواست Groq. تلاش مجدد پس از ${waitTime/1000} ثانیه... (تلاش ${attempt} از ${maxRetries})`;
-                            await sleep(waitTime);
-                            continue; 
-                        }
-                    }
-                    throw new Error(`خطای API (${response.status}): ${errorMessage}`);
-                }
-
-                const data = await response.json();
-                if (data.choices && data.choices.length > 0 && data.choices[0].message) {
-                    return data.choices[0].message.content;
-                } else {
-                    throw new Error('پاسخ معتبری از Groq دریافت نشد.');
-                }
-
-            } catch (error) {
-                if (attempt < maxRetries && !error.message.includes('خطای API')) {
-                     await sleep(5000);
-                     continue;
-                }
-                if (attempt === maxRetries) {
-                    throw error;
-                }
-            }
-        }
-    }
+})();
 </script>
-
 </body>
 </html>
